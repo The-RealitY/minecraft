@@ -17,15 +17,17 @@ BACKUP_INTERVAL = os.getenv('BACKUP_INTERVAL', '30M')
 RETENTION = int(os.getenv('RETENTION', 5))
 ARCHIVE = int(os.getenv('ARCHIVE', 7))
 GDRIVE_ID = os.getenv('GDRIVE_ID', 'root')
-LOG_FILE = os.path.join(os.getcwd(), 'system.log')
 MC_CONTAINER_NAME = "mc-br"
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
 DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
 DISCORD_AUTH_ROLES = [int(i) for i in os.getenv('DISCORD_AUTH_ROLES', "0").split(',')]
-# Create logger formatter
+
+# Create logger
+LOG_PATH = os.path.join(os.getcwd(), 'backup_logs')
+os.makedirs(LOG_PATH, exist_ok=True)
 logging.basicConfig(
     format=f"|| {__name__} || %(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler(f"{LOG_FILE}", encoding="UTF-8"),
+    handlers=[logging.FileHandler(f"{os.path.join(LOG_PATH, 'backup.log')}", encoding="UTF-8"),
               logging.StreamHandler()],
     datefmt="%d-%b-%y %H:%M:%S",
     level=logging.DEBUG,
