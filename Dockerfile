@@ -9,7 +9,6 @@ RUN apk add --no-cache --virtual .build-deps gcc libpq-dev musl-dev && apk del .
 
 # Copy the necessary files to the container
 COPY ./mc_backup /app/mc_backup
-COPY credentials.json /app
 COPY token.json /app
 COPY requirements.txt /app
 
