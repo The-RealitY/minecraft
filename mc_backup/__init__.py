@@ -6,9 +6,7 @@ import pytz
 from discord.ext.commands import Bot
 
 from mc_backup.utils.command import MyHelpCommand
-from mc_backup.utils.container import DockerContainer
 from mc_backup.utils.notifi import ProcessWebhook
-from mc_backup.utils.scheduler import SchedulerManager
 
 TZ = os.getenv('TZ', 'Asia/Kolkata')
 MC_DATA_PATH = os.path.join(os.getcwd(), 'data')

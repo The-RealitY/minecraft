@@ -2,7 +2,8 @@
 
 from discord.ext.commands import Cog, command, check
 
-from mc_backup import wh, log, MC_DATA_PATH, BACKUP_PATH, RETENTION, DockerContainer, MC_CONTAINER_NAME
+from mc_backup import wh, log, MC_DATA_PATH, BACKUP_PATH, RETENTION,  MC_CONTAINER_NAME
+from mc_backup.utils.container import DockerContainer
 from mc_backup.utils.file import FileArchive
 from mc_backup.utils.permission import check_role
 from mc_backup.utils.response import send_message
