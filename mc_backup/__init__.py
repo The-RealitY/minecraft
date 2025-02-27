@@ -21,11 +21,11 @@ LOG_FILE = os.path.join(os.getcwd(), 'system.log')
 MC_CONTAINER_NAME = "mc-br"
 DISCORD_BOT_TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
 DISCORD_WEBHOOK_URL = os.getenv('DISCORD_WEBHOOK_URL', '')
-DISCORD_AUTH_ROLES = [int(i) for i in os.getenv('DISCORD_AUTH_ROLES', '').split(',')]
+DISCORD_AUTH_ROLES = [int(i) for i in os.getenv('DISCORD_AUTH_ROLES', "0").split(',')]
 # Create logger formatter
 logging.basicConfig(
     format=f"|| {__name__} || %(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[logging.FileHandler("System.log", encoding="UTF-8"),
+    handlers=[logging.FileHandler(f"{LOG_FILE}", encoding="UTF-8"),
               logging.StreamHandler()],
     datefmt="%d-%b-%y %H:%M:%S",
     level=logging.DEBUG,
@@ -33,4 +33,4 @@ logging.basicConfig(
 log = logging.getLogger(__name__)
 time_zone = pytz.timezone(TZ)
 bot = Bot("!", intents=discord.Intents.all(), help_command=MyHelpCommand())
-wh = ProcessWebhook(DISCORD_WEBHOOK_URL, log,time_zone)
+wh = ProcessWebhook(DISCORD_WEBHOOK_URL, log, time_zone)
