@@ -2,9 +2,10 @@ import os
 
 from discord.ext import commands
 
-from mc_backup import bot, DISCORD_BOT_TOKEN, log, BACKUP_INTERVAL, SchedulerManager, wh, MC_DATA_PATH, BACKUP_PATH, RETENTION, GDRIVE_ID, ARCHIVE, time_zone
+from mc_backup import bot, DISCORD_BOT_TOKEN, log, BACKUP_INTERVAL,  wh, MC_DATA_PATH, BACKUP_PATH, RETENTION, GDRIVE_ID, ARCHIVE, time_zone
 from mc_backup.utils.drive import Gdrive
 from mc_backup.utils.file import FileArchive
+from mc_backup.utils.scheduler import SchedulerManager
 
 
 def create_backup():
