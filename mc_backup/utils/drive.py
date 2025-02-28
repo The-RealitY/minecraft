@@ -106,7 +106,7 @@ class Gdrive:
             self.webhook.edit_message(f"File not found: {file_path}")
             return False
         file_metadata = {'name': os.path.basename(file_path), 'parents': [folder_id]}
-        media = MediaFileUpload(file_path, resumable=True)
+        media = MediaFileUpload(file_path, resumable=False)
         try:
             response = self.service.files().create(body=file_metadata, media_body=media, fields='id').execute()
             self.log.info(f"Uploaded file ID: {response['id']}")
