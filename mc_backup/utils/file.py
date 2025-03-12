@@ -1,5 +1,4 @@
 import os
-import shutil
 import tarfile
 import zipfile
 from datetime import datetime
@@ -87,40 +86,47 @@ class FileArchive:
             self.webhook.edit_message(f"Failed to compress to .zip: {e}")
         return None
 
-    def decompress_zip(self, backup_name):
+    def decompress_zip(self, backup_name, buffer_size=1024 * 1024):
         """
-        Quickly extracts a ZIP file, ensuring full overwrite.
+        Unzips a file and overwrites existing files if they already exist.
+
         """
         try:
             src_path: Any = os.path.join(self.backup_path, backup_name)
-            dest_path = self.mc_data_path
-
-            if not os.path.exists(src_path):
+            if not src_path:
                 self.log.error(f"Backup File Not Found: {src_path}")
                 self.webhook.edit_message(f"Backup File Not Found: {src_path}")
                 return None
-
-            # 🚀 Remove existing world folder for a full reset
-            if os.path.exists(dest_path):
-                shutil.rmtree(dest_path)
-
-            os.makedirs(dest_path, exist_ok=True)
+            dest_path: Any = os.path.join(self.mc_data_path)
+            if not os.path.exists(dest_path):
+                os.makedirs(dest_path)
 
             with zipfile.ZipFile(src_path, 'r') as zip_ref:
-                self.log.info('Restoring the Backup. Please wait...')
-                self.webhook.edit_message('Restoring the Backup. Please wait...')
+                self.log.info('Restoring the Backup Please Wait, It may take some times, depends on Size')
+                self.webhook.edit_message('Restoring the Backup Please Wait, It may take some times, depends on Size')
+                for file_info in zip_ref.infolist():
+                    source = zip_ref.open(file_info)
+                    target_path = os.path.join(dest_path, file_info.filename)
 
-                # ⚡ Extract all files in one operation (much faster)
-                zip_ref.extractall(dest_path)
-
-            self.log.info("Restoration completed successfully!")
-            self.webhook.edit_message("Restoration completed successfully!")
-            return True
-
+                    if file_info.is_dir():
+                        os.makedirs(target_path, exist_ok=True)
+                    else:
+                        os.makedirs(os.path.dirname(target_path), exist_ok=True)
+                        with open(target_path, "wb") as target:
+                            # Copy the file in chunks to reduce CPU impact
+                            while True:
+                                chunk = source.read(buffer_size)
+                                if not chunk:
+                                    break
+                                target.write(chunk)
+                    source.close()
+                self.log.info("Restoration was successfully completed")
+                self.webhook.edit_message("Restoration was successfully completed")
+                return True
         except Exception as e:
-            self.log.error(f"Error restoring backup: {e}")
-            self.webhook.edit_message(f"Error restoring backup: {e}")
-            return False
+            self.log.error(f"Unable to Extract the backup: {e}")
+            self.webhook.edit_message(f"Unable to Extract the backup: {e}")
+        return False
 
     def compress_to_tar(self):
         """
