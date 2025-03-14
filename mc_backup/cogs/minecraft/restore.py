@@ -1,8 +1,9 @@
 """Latency Cog"""
+import asyncio
 
 from discord.ext.commands import Cog, command, check
 
-from mc_backup import wh, log, MC_DATA_PATH, BACKUP_PATH, RETENTION,  MC_CONTAINER_NAME
+from mc_backup import wh, log, MC_DATA_PATH, BACKUP_PATH, RETENTION, MC_CONTAINER_NAME
 from mc_backup.utils.container import DockerContainer
 from mc_backup.utils.file import FileArchive
 from mc_backup.utils.permission import check_role
@@ -30,13 +31,14 @@ class Restore(Cog):
         mcc = DockerContainer(wh, MC_CONTAINER_NAME, log)
         try:
             mcc.stop()
+            await asyncio.sleep(5)
             response = file.decompress_zip(filename)
             if not response:
                 return await send_message(ctx, "Failed to Restore the Backup, See Logs For More Info")
             wh.send_message("Last Restore Process Was Successfully Completed")
             return await send_message(ctx, "Restore was Successfully Completed")
         finally:
-            mcc.start()
+            mcc.restart()
 
 
 async def setup(bot):

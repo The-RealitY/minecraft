@@ -28,7 +28,7 @@ logging.basicConfig(
     handlers=[logging.FileHandler(f"{os.path.join(LOG_PATH, 'backup.log')}", encoding="UTF-8"),
               logging.StreamHandler()],
     datefmt="%d-%b-%y %H:%M:%S",
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 log = logging.getLogger(__name__)
 time_zone = pytz.timezone(TZ)

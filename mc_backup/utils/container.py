@@ -12,12 +12,13 @@ class DockerContainer:
         self.client = docker.from_env()
 
     def stop(self):
-        """Stop the Docker container."""
+        """Stop the Docker container and ensure it's fully stopped."""
         try:
             container = self.client.containers.get(self.container_name)
             container.stop()
-            self.log.info(f"Container {self.container_name} stopped.")
-            self.webhook.edit_message(f"Container {self.container_name} stopped.")
+            container.wait()  # Ensures that the container is fully stopped
+            self.log.info(f"Container {self.container_name} fully stopped.")
+            self.webhook.edit_message(f"Container {self.container_name} fully stopped.")
         except docker.errors.NotFound:
             self.log.error(f"Container {self.container_name} not found.")
             self.webhook.edit_message(f"Container {self.container_name} not found.")
@@ -25,16 +26,16 @@ class DockerContainer:
             self.log.error(f"Error stopping container {self.container_name}: {e}")
             self.webhook.edit_message(f"Error stopping container {self.container_name}: {e}")
 
-    def start(self):
-        """Start the Docker container."""
+    def restart(self):
+        """Restart the Docker container."""
         try:
             container = self.client.containers.get(self.container_name)
-            container.start()
-            self.log.info(f"Container {self.container_name} started.")
-            self.webhook.edit_message(f"Container {self.container_name} started.")
+            container.restart()
+            self.log.info(f"Container {self.container_name} restarted.")
+            self.webhook.edit_message(f"Container {self.container_name} restarted.")
         except docker.errors.NotFound:
             self.log.error(f"Container {self.container_name} not found.")
             self.webhook.edit_message(f"Container {self.container_name} not found.")
         except Exception as e:
-            self.log.error(f"Error starting container {self.container_name}: {e}")
-            self.webhook.edit_message(f"Error starting container {self.container_name}: {e}")
+            self.log.error(f"Error restarting container {self.container_name}: {e}")
+            self.webhook.edit_message(f"Error restarting container {self.container_name}: {e}")
