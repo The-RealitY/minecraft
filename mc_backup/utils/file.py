@@ -4,6 +4,7 @@ import zipfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+import shutil
 
 from mc_backup import ProcessWebhook
 
@@ -25,7 +26,7 @@ class FileArchive:
         :return: Full path to the archive file
         """
         os.makedirs(self.backup_path, exist_ok=True)
-        file_prefix = "MineCraftBackup"
+        file_prefix = "MCB"
         tz = datetime.now().strftime('%Y%m%d_%H%M%S')
         self.filename = f"{file_prefix}_{tz}{ext}"
         arch_path = os.path.join(self.backup_path, self.filename)
@@ -89,17 +90,45 @@ class FileArchive:
     def decompress_zip(self, backup_name, buffer_size=1024 * 1024):
         """
         Unzips a file and overwrites existing files if they already exist.
-
+        Now also renames the existing data folder to data-backup-<timestamp> before restoring.
+        Adds a retry loop for renaming in case of 'Resource busy' errors.
         """
         try:
+            import time
             src_path: Any = os.path.join(self.backup_path, backup_name)
-            if not src_path:
+            if not src_path or not os.path.exists(src_path):
                 self.log.error(f"Backup File Not Found: {src_path}")
                 self.webhook.edit_message(f"Backup File Not Found: {src_path}")
                 return None
             dest_path: Any = os.path.join(self.mc_data_path)
-            if not os.path.exists(dest_path):
-                os.makedirs(dest_path)
+
+            # If /data exists, rename it to /data-backup-<timestamp> with retry logic
+            if os.path.exists(dest_path) and os.path.isdir(dest_path):
+                timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+                backup_dest = f"{dest_path}-backup-{timestamp}"
+                for attempt in range(5):
+                    try:
+                        if os.path.exists(backup_dest):
+                            shutil.rmtree(backup_dest)
+                        os.rename(dest_path, backup_dest)
+                        self.log.info(f"Renamed existing data folder to {backup_dest}")
+                        self.webhook.edit_message(f"Renamed existing data folder to {backup_dest}")
+                        break
+                    except OSError as e:
+                        if e.errno == 16:  # Resource busy
+                            self.log.warning(f"Attempt {attempt+1}: Resource busy, retrying rename in 3 seconds...")
+                            time.sleep(3)
+                        else:
+                            self.log.error(f"Failed to rename data folder: {e}")
+                            self.webhook.edit_message(f"Failed to rename data folder: {e}")
+                            return None
+                else:
+                    self.log.error(f"Failed to rename data folder after multiple attempts: Resource busy")
+                    self.webhook.edit_message(f"Failed to rename data folder after multiple attempts: Resource busy")
+                    return None
+
+            # Create a new /data folder
+            os.makedirs(dest_path, exist_ok=True)
 
             with zipfile.ZipFile(src_path, 'r') as zip_ref:
                 self.log.info('Restoring the Backup Please Wait, It may take some times, depends on Size')
