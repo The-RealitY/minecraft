@@ -105,16 +105,40 @@ class Gdrive:
             self.log.error(f"File not found: {file_path}")
             self.webhook.edit_message(f"File not found: {file_path}")
             return False
-        file_metadata = {'name': os.path.basename(file_path), 'parents': [folder_id]}
-        media = MediaFileUpload(file_path, resumable=False)
+        
+        file_size = os.path.getsize(file_path)
+        file_name = os.path.basename(file_path)
+        
+        self.log.info(f"Uploading {file_name} ({file_size / (1024*1024):.2f} MB) to Google Drive...")
+        self.webhook.edit_message(f"Uploading {file_name} ({file_size / (1024*1024):.2f} MB)...")
+        
+        file_metadata = {'name': file_name, 'parents': [folder_id]}
+        
+        # Use resumable upload for large files (>5MB)
+        use_resumable = file_size > 5 * 1024 * 1024
+        media = MediaFileUpload(file_path, resumable=use_resumable)
+        
         try:
-            response = self.service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-            self.log.info(f"Uploaded file ID: {response['id']}")
-            self.webhook.edit_message(f"Uploaded file ID: {response['id']}")
+            if use_resumable:
+                # Handle resumable upload with progress tracking
+                request = self.service.files().create(body=file_metadata, media_body=media, fields='id')
+                response = None
+                while response is None:
+                    status, response = request.next_chunk()
+                    if status:
+                        progress = int(status.progress() * 100)
+                        self.webhook.edit_message(f"Uploading {file_name}: {progress}% complete")
+            else:
+                # Simple upload for small files
+                response = self.service.files().create(body=file_metadata, media_body=media, fields='id').execute()
+            
+            self.log.info(f"Successfully uploaded {file_name} (ID: {response['id']})")
+            self.webhook.edit_message(f"✅ Uploaded {file_name} successfully")
             return response['id']
+            
         except Exception as error:
             self.log.error(f"Error uploading file '{file_path}': {error}")
-            self.webhook.edit_messager(f"Error uploading file '{file_path}': {error}")
+            self.webhook.edit_message(f"❌ Upload failed for {file_name}: {error}")
             return False
 
     @retry_request
