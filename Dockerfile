@@ -23,8 +23,7 @@ COPY requirements.txt /app/
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt \
-    && pip cache purge
+    && pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY ./mc_backup /app/mc_backup
