@@ -1,7 +1,4 @@
-version: '3.8'
-
 services:
-  # Minecraft Bedrock server service
   mc-br:
     image: itzg/minecraft-bedrock-server:latest
     container_name: mc-br
@@ -19,22 +16,8 @@ services:
       - "19132:19132/udp"
       - "19133:19133/udp"
     volumes:
-      - mc_data:/data
+      - ./data:/data
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "mc-monitor", "status", "--host", "localhost", "--port", "19132"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          memory: 2G
-          cpus: '1.0'
-        reservations:
-          memory: 1G
-          cpus: '0.5'
 
   mc-backup:
     build:
@@ -43,56 +26,20 @@ services:
     container_name: mc-backup
     environment:
       TZ: "Asia/Kolkata"
-      RETENTION: "5" # How Many Backup Should Be Kept on Drive and Local
-      ARCHIVE: "7" # How Often the Archive Backup Should be Taken (In Days)
-      GDRIVE_ID: "root" # Drive Folder ID for backup and archive
-      BACKUP_INTERVAL: "1H" # Backup Frequency, available 1H,1M,1S
-      DISCORD_BOT_TOKEN: "" # Discord Bot Token
-      DISCORD_WEBHOOK_URL: "" # Discord Webhook for all the process logs
-      DISCORD_AUTH_ROLES: "" # Add Multiple Role ID by comma separated
-      # Performance optimizations
+      RETENTION: "10"
+      ARCHIVE: "5"
+      GDRIVE_ID: ""
+      BACKUP_INTERVAL: "1M"
+      DISCORD_BOT_TOKEN: ""
+      DISCORD_WEBHOOK_URL: ""
+      DISCORD_AUTH_ROLES: ""
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"
     volumes:
-      - mc_data:/app/data:ro  # Read-only access to Minecraft data
-      - backup_data:/app/backup  # Backup storage
-      - backup_logs:/app/backup_logs  # Log storage
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # Read-only Docker socket
+      - ./data:/app/data:ro
+      - ./backup:/app/backup
+      - ./backup_logs:/app/backup_logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
-      mc-br:
-        condition: service_healthy
+      - mc-br
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "python3", "-c", "import os; exit(0 if os.path.exists('/app/backup_logs') else 1)"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-          cpus: '0.5'
-        reservations:
-          memory: 256M
-          cpus: '0.25'
-
-volumes:
-  mc_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data
-  backup_data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./backup
-  backup_logs:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./backup_logs
